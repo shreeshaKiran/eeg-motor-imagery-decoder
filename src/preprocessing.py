@@ -15,7 +15,7 @@ from mne.io import read_raw_edf
 
 # ---------------------------------------------------------------- paths
 PROJECT_ROOT = Path(__file__).resolve().parents[1]      # folder that contains src/
-RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"            # EDF downloads go here
+RAW_DATA_DIR = PROJECT_ROOT / "data" / "mne_data"       # EDF downloads go here
 CACHE_PATH = PROJECT_ROOT / "data" / "cache" / "mi_subjects_1_40.npz"   # delete after changing any setting below
 
 # Accept plain strings too (e.g. RAW_DATA_DIR = "/Users/you/eeg_data")
