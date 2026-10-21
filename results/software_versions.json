@@ -1,0 +1,11 @@
+{
+  "python": "3.13.9",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "numpy": "2.3.5",
+  "scipy": "1.16.3",
+  "sklearn": "1.7.2",
+  "mne": "1.11.0",
+  "torch": "2.10.0",
+  "pandas": "2.3.3",
+  "pyriemann": "0.11"
+}
