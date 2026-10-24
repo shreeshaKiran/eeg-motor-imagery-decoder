@@ -38,8 +38,12 @@ def compute_metrics(y_true, y_pred):
 
 
 def run_loso(name, fit_predict, X, y, groups, ch_names, align=False, channels=None,
-             out_dir="results", seed=42, resume=True):
-    """Run LOSO for one model/condition. Returns a per-subject metrics DataFrame."""
+             out_dir="results", seed=42, resume=True, subjects=None):
+    """Run LOSO for one model/condition. Returns a per-subject metrics DataFrame.
+
+    subjects: optional subset of held-out subjects (for quick tests). Each fold still trains
+    on ALL other subjects, so folds are identical to a full run.
+    """
     if channels is not None:
         X, ch_names = select_channels(X, ch_names, channels)
     if align:
@@ -51,7 +55,7 @@ def run_loso(name, fit_predict, X, y, groups, ch_names, align=False, channels=No
     os.makedirs(os.path.join(out_dir, "tables"), exist_ok=True)
 
     rows = []
-    for s in np.unique(groups):
+    for s in (np.unique(groups) if subjects is None else subjects):
         path = os.path.join(pred_dir, f"S{s}.npz")
         if resume and os.path.exists(path):
             d = np.load(path, allow_pickle=True)
@@ -64,7 +68,9 @@ def run_loso(name, fit_predict, X, y, groups, ch_names, align=False, channels=No
             y_true = y[test]
             np.savez(path, y_true=y_true, y_pred=y_pred, proba=proba, info=json.dumps(info))
 
-        row = {"subject": int(s), "n_trials": len(y_true), **compute_metrics(y_true, y_pred), **info}
+        # Lists (e.g. EEGNet loss curves) stay in the .npz, not in the per-subject table
+        scalars = {k: v for k, v in info.items() if not isinstance(v, (list, dict))}
+        row = {"subject": int(s), "n_trials": len(y_true), **compute_metrics(y_true, y_pred), **scalars}
         rows.append(row)
         print(f"[{tag}] S{s}: acc={row['accuracy']:.3f} bal_acc={row['balanced_accuracy']:.3f}")
 

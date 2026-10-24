@@ -1,3 +1,6 @@
+import copy
+import time
+
 import numpy as np
 
 import torch
@@ -289,3 +292,109 @@ def run_eegnet(X, y, groups):
         "actual": actual,
         "predictions": predictions
     }
+
+# ---------------------------------------------------------------------
+# LOSO interface (used by src/subject_independent.run_loso)
+# Settings fixed in CLAUDE.md before any EEGNet LOSO result existed.
+# ---------------------------------------------------------------------
+
+LOSO_SEED = 42
+LOSO_BATCH_SIZE = 64
+LOSO_MAX_EPOCHS = 100
+LOSO_PATIENCE = 10
+LOSO_LEARNING_RATE = 1e-3
+LOSO_N_VAL_SUBJECTS = 4
+
+
+def get_device():
+    # CPU only (frozen in CLAUDE.md): on MPS (torch 2.10.0) EEGNet failed to fit even 256
+    # training trials, while the same code and seed overfit them on CPU.
+    return torch.device("cpu")
+
+
+def _predict_logits(model, X, device, batch_size=256):
+    model.eval()
+    out = []
+    with torch.no_grad():
+        for i in range(0, len(X), batch_size):
+            out.append(model(X[i:i + batch_size].to(device)).cpu())
+    return torch.cat(out)
+
+
+def eegnet_fit_predict(X_train, y_train, groups_train, X_test, input_scale):
+    """fit_predict(X_train, y_train, groups_train, X_test) -> (pred, proba_class1, info).
+
+    Bind input_scale with functools.partial: a FIXED constant, not a fitted statistic, applied
+    identically to train and test. 1e6 for raw data (volts -> microvolts); 1.0 for Euclidean-
+    aligned data, which is already dimensionless and ~unit scale.
+
+    Validation (for early stopping only) = LOSO_N_VAL_SUBJECTS TRAINING subjects held out by
+    group. The test subject is used only for the final forward pass.
+    """
+    device = get_device()
+    start = time.time()
+
+    # Validation subjects: seeded choice among training subjects only
+    rng = np.random.default_rng(LOSO_SEED)
+    train_subjects = np.unique(groups_train)
+    val_subjects = np.sort(rng.choice(train_subjects, LOSO_N_VAL_SUBJECTS, replace=False))
+    val_mask = np.isin(groups_train, val_subjects)
+
+    def to_tensor(a):
+        return torch.tensor(a[:, None, :, :] * input_scale, dtype=torch.float32)
+
+    X_fit, y_fit = to_tensor(X_train[~val_mask]), torch.tensor(y_train[~val_mask], dtype=torch.long)
+    X_val, y_val = to_tensor(X_train[val_mask]), torch.tensor(y_train[val_mask], dtype=torch.long)
+    X_te = to_tensor(X_test)
+
+    generator = torch.Generator().manual_seed(LOSO_SEED)
+    loader = DataLoader(TensorDataset(X_fit, y_fit), batch_size=LOSO_BATCH_SIZE,
+                        shuffle=True, generator=generator)
+
+    torch.manual_seed(LOSO_SEED)
+    model = EEGNet(X_fit.shape[2], X_fit.shape[3]).to(device)
+    loss_function = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LOSO_LEARNING_RATE)
+
+    train_losses, val_losses = [], []
+    best_val, best_epoch, best_state = np.inf, 0, None
+
+    for epoch in range(LOSO_MAX_EPOCHS):
+        model.train()
+        total, n = 0.0, 0
+        for batch_X, batch_y in loader:
+            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+            optimizer.zero_grad()
+            loss = loss_function(model(batch_X), batch_y)
+            loss.backward()
+            optimizer.step()
+            model.apply_max_norm()
+            total += loss.item() * len(batch_y)
+            n += len(batch_y)
+        train_losses.append(total / n)
+
+        val_loss = loss_function(_predict_logits(model, X_val, device), y_val).item()
+        val_losses.append(val_loss)
+
+        if val_loss < best_val:
+            best_val, best_epoch = val_loss, epoch + 1
+            best_state = copy.deepcopy(model.state_dict())
+        elif epoch + 1 - best_epoch >= LOSO_PATIENCE:
+            break
+
+    model.load_state_dict(best_state)
+    proba = torch.softmax(_predict_logits(model, X_te, device), dim=1)[:, 1].numpy()
+    pred = (proba >= 0.5).astype(int)
+
+    info = {
+        "device": str(device),
+        "val_subjects": "-".join(str(int(s)) for s in val_subjects),
+        "epochs_run": len(train_losses),
+        "best_epoch": int(best_epoch),
+        "best_val_loss": float(best_val),
+        "input_scale": float(input_scale),
+        "train_time_s": round(time.time() - start, 1),
+        "train_losses": [float(v) for v in train_losses],
+        "val_losses": [float(v) for v in val_losses],
+    }
+    return pred, proba, info
