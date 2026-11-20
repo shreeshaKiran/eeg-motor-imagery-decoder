@@ -335,9 +335,6 @@ data/                      not in git
 | EEGNet C3/Cz/C4 and motor strip, raw vs aligned (exploratory) | Done |
 | Paired statistics (primary, secondary, exploratory) and per-subject binomial tests | Done |
 | Simulated real-time demo (pre-recorded data) | Done |
-| Riemannian tangent space + logistic regression | NOT DONE (out of scope) |
-| Calibration experiment (0/5/10 labeled trials from the held-out subject) | NOT DONE (out of scope) |
-| KNN baseline under `run_loso`, dashboard | NOT DONE (dropped) |
 
 No results are reported for experiments that have not run. `results/electrode_comparison.csv` comes
 from an earlier 10-subject run of the older KNN/EEGNet code and is not part of the results above.
