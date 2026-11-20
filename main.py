@@ -42,7 +42,7 @@ def run_csp_lda_2x2(X, y, groups, channel_names, results_dir="results"):
 
 
 def run_eegnet_loso(X, y, groups, channel_names, results_dir="results", subjects=None):
-    """EEGNet-8,2 LOSO on 64 channels: raw vs Euclidean-aligned (settings fixed in CLAUDE.md)."""
+    """EEGNet-8,2 LOSO on 64 channels: raw vs Euclidean-aligned (settings fixed before any LOSO result; see README, Methods)."""
     from functools import partial
     from src.train_eegnet import eegnet_fit_predict
 

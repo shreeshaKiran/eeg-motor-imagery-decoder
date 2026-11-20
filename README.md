@@ -302,7 +302,6 @@ Folder layout:
 
 ```
 main.py                    entry point (--csp-only, --motor-strip, --eegnet, --eegnet-subsets)
-CLAUDE.md                  project rules and status
 src/
   preprocessing.py         download, filter, reference, epoch, cache
   alignment.py             per-subject Euclidean alignment

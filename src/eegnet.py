@@ -1,6 +1,6 @@
 """EEGNet-8,2 (Lawhern et al., 2018), adapted to 160 Hz input.
 
-Input: (batch, 1, channels, time). Settings are fixed in CLAUDE.md before any LOSO result.
+Input: (batch, 1, channels, time). Settings were fixed before any LOSO result (see README, Methods).
 """
 import torch
 import torch.nn as nn

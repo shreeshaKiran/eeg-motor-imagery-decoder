@@ -295,7 +295,7 @@ def run_eegnet(X, y, groups):
 
 # ---------------------------------------------------------------------
 # LOSO interface (used by src/subject_independent.run_loso)
-# Settings fixed in CLAUDE.md before any EEGNet LOSO result existed.
+# Settings fixed before any EEGNet LOSO result existed (see README, Methods).
 # ---------------------------------------------------------------------
 
 LOSO_SEED = 42
@@ -307,7 +307,7 @@ LOSO_N_VAL_SUBJECTS = 4
 
 
 def get_device():
-    # CPU only (frozen in CLAUDE.md): on MPS (torch 2.10.0) EEGNet failed to fit even 256
+    # CPU only (fixed with the other settings): on MPS (torch 2.10.0) EEGNet failed to fit even 256
     # training trials, while the same code and seed overfit them on CPU.
     return torch.device("cpu")
 
