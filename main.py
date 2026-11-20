@@ -70,6 +70,37 @@ def run_eegnet_loso(X, y, groups, channel_names, results_dir="results", subjects
     return summary
 
 
+def run_eegnet_subsets(X, y, groups, channel_names, results_dir="results", subjects=None):
+    """EXPLORATORY (requested 2026-11-19, after the 64-ch results): EEGNet-8,2 LOSO on
+    C3/Cz/C4 and the 21 motor-strip channels, raw vs aligned. Frozen EEGNet settings; only the
+    channel subset changes (selected in run_loso before per-subject alignment)."""
+    from functools import partial
+    from src.train_eegnet import eegnet_fit_predict
+
+    print("\n" + "=" * 60)
+    print("EEGNet LOSO channel subsets (C3/Cz/C4, motor strip 21; raw vs aligned) [exploratory]")
+    print("=" * 60)
+
+    summary_rows = []
+    for channels, ch_label in ((MOTOR_CHANNELS, "-".join(MOTOR_CHANNELS)), (MOTOR_STRIP, "motor_strip_21")):
+        for align in (False, True):
+            fit_predict = partial(eegnet_fit_predict, input_scale=1.0 if align else 1e6)
+            df = run_loso("eegnet", fit_predict, X, y, groups, channel_names,
+                          align=align, channels=channels, out_dir=results_dir, subjects=subjects)
+            row = {"model": "EEGNet", "channels": ch_label, "aligned": align, "n_subjects": len(df)}
+            for m in ("accuracy", "macro_f1", "balanced_accuracy"):
+                row[f"{m}_mean"] = df[m].mean()
+                row[f"{m}_std"] = df[m].std()
+            summary_rows.append(row)
+
+    summary = pd.DataFrame(summary_rows)
+    path = os.path.join(results_dir, "tables", "eegnet_subsets_summary.csv")
+    summary.to_csv(path, index=False)
+    print("\n" + summary.round(3).to_string(index=False))
+    print(f"\nSaved summary to {path}")
+    return summary
+
+
 def run_csp_motor_strip(X, y, groups, channel_names, results_dir="results", subjects=None):
     """CSP-LDA LOSO on the 21 motor-strip channels: raw vs Euclidean-aligned."""
     print("\n" + "=" * 60)
@@ -104,10 +135,12 @@ def main():
                         help="run only EEGNet LOSO (64 ch, raw vs aligned)")
     parser.add_argument("--motor-strip", action="store_true",
                         help="run only CSP-LDA on the 21 motor-strip channels (raw vs aligned)")
+    parser.add_argument("--eegnet-subsets", action="store_true",
+                        help="run only EEGNet LOSO on C3/Cz/C4 and motor strip 21 ch, raw vs aligned (exploratory)")
     parser.add_argument("--out-dir", default="results",
-                        help="results directory for --eegnet/--motor-strip (results_test/ for trials)")
+                        help="results directory for --eegnet/--eegnet-subsets/--motor-strip (results_test/ for trials)")
     parser.add_argument("--subjects", type=int, nargs="+", default=None,
-                        help="held-out subjects for --eegnet/--motor-strip (default: all)")
+                        help="held-out subjects for --eegnet/--eegnet-subsets/--motor-strip (default: all)")
     args = parser.parse_args()
 
     set_seed(42)
@@ -129,6 +162,11 @@ def main():
     if args.eegnet:
         run_eegnet_loso(X, y, groups, channel_names, results_dir=args.out_dir,
                         subjects=args.subjects)
+        return
+
+    if args.eegnet_subsets:
+        run_eegnet_subsets(X, y, groups, channel_names, results_dir=args.out_dir,
+                           subjects=args.subjects)
         return
 
     if args.motor_strip:

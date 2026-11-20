@@ -1,0 +1,13 @@
+condition,tag,n_subjects,n_above_chance,frac_above_chance,median_trials_per_subject,mean_accuracy
+csp_lda_full_raw,csp_lda_raw_full,40,5,0.125,45.0,0.5497286821705426
+csp_lda_full_ea,csp_lda_ea_full,40,21,0.525,45.0,0.6332428940568475
+csp_lda_3ch_raw,csp_lda_raw_C3-Cz-C4,40,10,0.25,45.0,0.5937467700258398
+csp_lda_3ch_ea,csp_lda_ea_C3-Cz-C4,40,14,0.35,45.0,0.5988242894056848
+csp_lda_strip_raw,csp_lda_raw_FC5-FC3-FC1-FCz-FC2-FC4-FC6-C5-C3-C1-Cz-C2-C4-C6-CP5-CP3-CP1-CPz-CP2-CP4-CP6,40,10,0.25,45.0,0.5708914728682171
+csp_lda_strip_ea,csp_lda_ea_FC5-FC3-FC1-FCz-FC2-FC4-FC6-C5-C3-C1-Cz-C2-C4-C6-CP5-CP3-CP1-CPz-CP2-CP4-CP6,40,18,0.45,45.0,0.6355426356589147
+eegnet_full_raw,eegnet_raw_full,40,3,0.075,45.0,0.5220542635658914
+eegnet_full_ea,eegnet_ea_full,40,3,0.075,45.0,0.5258656330749354
+eegnet_3ch_raw,eegnet_raw_C3-Cz-C4,40,11,0.275,45.0,0.5904392764857882
+eegnet_3ch_ea,eegnet_ea_C3-Cz-C4,40,16,0.4,45.0,0.6116020671834625
+eegnet_strip_raw,eegnet_raw_FC5-FC3-FC1-FCz-FC2-FC4-FC6-C5-C3-C1-Cz-C2-C4-C6-CP5-CP3-CP1-CPz-CP2-CP4-CP6,40,15,0.375,45.0,0.5813953488372092
+eegnet_strip_ea,eegnet_ea_FC5-FC3-FC1-FCz-FC2-FC4-FC6-C5-C3-C1-Cz-C2-C4-C6-CP5-CP3-CP1-CPz-CP2-CP4-CP6,40,16,0.4,45.0,0.6283979328165374
